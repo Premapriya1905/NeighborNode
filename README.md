@@ -1,9 +1,3 @@
-Perfect. I love this approach. We’re building this like a real product, not just a tutorial project. 💪
-
-Here is your professional README.md for the project.
-
-You can copy this fully into your root README.md file.
-
 🏘️ NeighborNode
 
 A community-based service marketplace for people living in the same building or street.
