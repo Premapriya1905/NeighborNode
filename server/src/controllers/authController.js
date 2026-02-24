@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import ApiResponse from '../utils/apiResponse.js';
 import ApiError from '../utils/apiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
@@ -67,7 +68,7 @@ export const login = asyncHandler(async (req, res) => {
 
   // Update last login
   user.lastLogin = new Date();
-  
+
   // Generate tokens
   const { accessToken, refreshToken } = generateTokens(user._id);
 
@@ -196,8 +197,17 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     );
   }
 
-  // Generate reset token (implement this based on your email service)
-  // For now, just send success response
+  // Generate reset token 
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  // Print to console for local testing since there's no email service configured
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+  console.log('\\n================ PASSWORD RESET LINK ================');
+  console.log(`Email sent to: ${user.email}`);
+  console.log(`Use this URL to reset the password: ${resetUrl}`);
+  console.log('=====================================================\\n');
+
   ApiResponse.success(
     res,
     null,
@@ -213,8 +223,27 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 export const resetPassword = asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body;
 
-  // Implement password reset logic here
-  // This would involve verifying the token and updating the password
+  if (!token || !newPassword) {
+    throw ApiError.badRequest('Please provide token and new password');
+  }
+
+  // Hash the token to compare with DB
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    throw ApiError.badRequest('Token is invalid or has expired');
+  }
+
+  // Set new password
+  user.password = newPassword;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
 
   ApiResponse.success(res, null, 'Password reset successful');
 });
@@ -228,6 +257,6 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   const { token } = req.query;
 
   // Implement email verification logic here
-  
+
   ApiResponse.success(res, null, 'Email verified successfully');
 });

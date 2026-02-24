@@ -54,7 +54,7 @@ const ServiceDetail = () => {
       return;
     }
 
-    if (user._id === service?.provider?._id) {
+    if (user._id === service?.providerId?._id) {
       toast.error("You can't book your own service");
       return;
     }
@@ -63,7 +63,7 @@ const ServiceDetail = () => {
     try {
       const payload = {
         serviceId: id,
-        providerId: service.provider._id,
+        providerId: service.providerId._id,
         scheduledDate: bookingData.scheduledDate,
         scheduledTime: bookingData.scheduledTime,
         customerNote: bookingData.customerNote,
@@ -124,7 +124,7 @@ const ServiceDetail = () => {
     }
   };
 
-  const isOwnService = user?._id === service?.provider?._id;
+  const isOwnService = user?._id === service?.providerId?._id;
 
   if (error) {
     return (

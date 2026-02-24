@@ -48,7 +48,7 @@ const ServiceFilters = ({ onFilterChange, filters = {} }) => {
       </div>
 
       {/* Desktop Filters */}
-      <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="hidden md:flex flex-col gap-6">
         {/* Category */}
         <div>
           <label className="block text-sm font-semibold mb-3">Category</label>
@@ -119,9 +119,8 @@ const ServiceFilters = ({ onFilterChange, filters = {} }) => {
             More Filters
           </span>
           <ChevronDown
-            className={`w-4 h-4 transition-transform ${
-              isExpanded ? "rotate-180" : ""
-            }`}
+            className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""
+              }`}
           />
         </button>
 

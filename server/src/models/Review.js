@@ -116,10 +116,10 @@ reviewSchema.index({ rating: -1 });
 reviewSchema.index({ createdAt: -1 });
 
 // Prevent duplicate reviews for same booking
-reviewSchema.index({ bookingId: 1 }, { unique: true });
+// Index is already defined in the schema property along with unique: true
 
 // Static method to get service reviews
-reviewSchema.statics.getServiceReviews = function(serviceId, limit = 10) {
+reviewSchema.statics.getServiceReviews = function (serviceId, limit = 10) {
   return this.find({ serviceId, isApproved: true })
     .populate('reviewerId', 'firstName lastName displayName profileImage')
     .sort({ createdAt: -1 })
@@ -127,7 +127,7 @@ reviewSchema.statics.getServiceReviews = function(serviceId, limit = 10) {
 };
 
 // Static method to calculate average rating
-reviewSchema.statics.calculateAverageRating = async function(serviceId) {
+reviewSchema.statics.calculateAverageRating = async function (serviceId) {
   const stats = await this.aggregate([
     {
       $match: { serviceId: mongoose.Types.ObjectId(serviceId), isApproved: true }
@@ -145,7 +145,7 @@ reviewSchema.statics.calculateAverageRating = async function(serviceId) {
 };
 
 // Update service and provider ratings after review save
-reviewSchema.post('save', async function() {
+reviewSchema.post('save', async function () {
   try {
     // Update service rating
     const serviceStats = await this.constructor.aggregate([
@@ -201,7 +201,7 @@ reviewSchema.post('save', async function() {
 });
 
 // Instance method to add provider response
-reviewSchema.methods.addResponse = async function(responseText) {
+reviewSchema.methods.addResponse = async function (responseText) {
   this.response = {
     text: responseText,
     respondedAt: new Date()
@@ -210,7 +210,7 @@ reviewSchema.methods.addResponse = async function(responseText) {
 };
 
 // Instance method to mark as helpful
-reviewSchema.methods.markHelpful = async function(userId) {
+reviewSchema.methods.markHelpful = async function (userId) {
   if (!this.markedHelpfulBy.includes(userId)) {
     this.markedHelpfulBy.push(userId);
     this.helpfulCount += 1;

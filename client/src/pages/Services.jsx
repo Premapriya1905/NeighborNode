@@ -1,17 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import { ServiceGrid, ServiceFilters } from "../components/services";
 import useServices from "../hooks/useServices";
 import toast from "react-hot-toast";
 
 const Services = () => {
   const { services = [], isLoading, error, fetchServices } = useServices();
+  const location = useLocation();
 
-  const [filters, setFilters] = useState({
-    category: "",
-    maxPrice: 500,
-    search: "",
-    sortBy: "newest",
+  const [filters, setFilters] = useState(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const initialCategory = searchParams.get('category') || "";
+    // optionally handle search param if you want:
+    const initialSearch = searchParams.get('search') || "";
+    return {
+      category: initialCategory,
+      maxPrice: 500,
+      search: initialSearch,
+      sortBy: "newest",
+    };
   });
 
   const loadServices = useCallback(async () => {

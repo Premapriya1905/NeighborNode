@@ -44,7 +44,7 @@ const serviceSchema = new mongoose.Schema({
     },
     amount: {
       type: Number,
-      required: function() {
+      required: function () {
         return this.pricing.type !== PRICING_TYPES.FREE;
       },
       min: [0, 'Price cannot be negative']
@@ -59,7 +59,7 @@ const serviceSchema = new mongoose.Schema({
   images: [{
     type: String,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return v.startsWith('http://') || v.startsWith('https://');
       },
       message: 'Image must be a valid URL'
@@ -131,7 +131,7 @@ const serviceSchema = new mongoose.Schema({
   },
   isApproved: {
     type: Boolean,
-    default: false,
+    default: true,
     index: true
   },
   approvedBy: {
@@ -189,7 +189,7 @@ serviceSchema.virtual('reviews', {
 });
 
 // Generate slug before saving
-serviceSchema.pre('save', function(next) {
+serviceSchema.pre('save', function (next) {
   if (this.isModified('title')) {
     this.slug = slugify(this.title, {
       lower: true,
@@ -201,7 +201,7 @@ serviceSchema.pre('save', function(next) {
 });
 
 // Update provider's service count
-serviceSchema.post('save', async function() {
+serviceSchema.post('save', async function () {
   if (this.isNew) {
     await mongoose.model('User').findByIdAndUpdate(
       this.providerId,
@@ -211,7 +211,7 @@ serviceSchema.post('save', async function() {
 });
 
 // Static method to get popular services
-serviceSchema.statics.getPopularServices = function(limit = 10) {
+serviceSchema.statics.getPopularServices = function (limit = 10) {
   return this.find({ isActive: true, isApproved: true })
     .sort({ rating: -1, reviewCount: -1, views: -1 })
     .limit(limit)
@@ -219,7 +219,7 @@ serviceSchema.statics.getPopularServices = function(limit = 10) {
 };
 
 // Static method to get nearby services
-serviceSchema.statics.getNearbyServices = function(buildingName, street, limit = 20) {
+serviceSchema.statics.getNearbyServices = function (buildingName, street, limit = 20) {
   return this.find({
     isActive: true,
     isApproved: true,
@@ -228,12 +228,12 @@ serviceSchema.statics.getNearbyServices = function(buildingName, street, limit =
       { 'location.street': street }
     ]
   })
-  .limit(limit)
-  .populate('providerId', 'firstName lastName displayName profileImage rating verifiedResident');
+    .limit(limit)
+    .populate('providerId', 'firstName lastName displayName profileImage rating verifiedResident');
 };
 
 // Method to increment views
-serviceSchema.methods.incrementViews = function() {
+serviceSchema.methods.incrementViews = function () {
   this.views += 1;
   return this.save();
 };

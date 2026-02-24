@@ -106,12 +106,12 @@ const LoginForm = () => {
               <input type="checkbox" className="rounded border-gray-300" />
               <span className="text-sm">Remember me</span>
             </label>
-            <a
-              href="#"
+            <Link
+              to="/forgot-password"
               className="text-sm text-primary-600 hover:text-primary-700"
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           {/* Submit Button */}
