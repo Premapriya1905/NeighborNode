@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { USER_ROLES } from '../config/constants.js';
 
 const userSchema = new mongoose.Schema({
@@ -46,7 +47,13 @@ const userSchema = new mongoose.Schema({
   },
   profileImage: {
     type: String,
-    default: 'https://res.cloudinary.com/demo/image/upload/avatar-default.png'
+    default: 'https://ui-avatars.com/api/?name=User&background=random',
+    get: function (val) {
+      if (!val || val.includes('avatar-default.png') || val.includes('res.cloudinary.com/demo/')) {
+        return 'https://ui-avatars.com/api/?name=User&background=random';
+      }
+      return val;
+    }
   },
 
   // Location (Critical for hyperlocal matching)
@@ -99,6 +106,12 @@ const userSchema = new mongoose.Schema({
   interests: [{
     type: String,
     trim: true
+  }],
+
+  // Saved/Favorite Services
+  savedServices: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Service'
   }],
 
   // Statistics
@@ -172,8 +185,8 @@ const userSchema = new mongoose.Schema({
 
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: { virtuals: true, getters: true },
+  toObject: { virtuals: true, getters: true }
 });
 
 // Indexes for performance
@@ -182,17 +195,17 @@ userSchema.index({ rating: -1 });
 userSchema.index({ 'location.buildingName': 1, 'location.street': 1 });
 
 // Virtual for full name
-userSchema.virtual('fullName').get(function() {
+userSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
 // Virtual for name (alias for fullName)
-userSchema.virtual('name').get(function() {
+userSchema.virtual('name').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   // Only hash if password is modified
   if (!this.isModified('password')) {
     return next();
@@ -205,7 +218,7 @@ userSchema.pre('save', async function(next) {
 });
 
 // Set display name before saving
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   if (!this.displayName) {
     this.displayName = this.fullName;
   }
@@ -213,12 +226,20 @@ userSchema.pre('save', function(next) {
 });
 
 // Method to compare passwords
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+// Method to generate password reset token
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  return resetToken;
+};
+
 // Method to generate auth token (will be used in controller)
-userSchema.methods.toAuthJSON = function() {
+userSchema.methods.toAuthJSON = function () {
   return {
     _id: this._id,
     email: this.email,

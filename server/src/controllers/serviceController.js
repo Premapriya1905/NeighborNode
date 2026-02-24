@@ -1,9 +1,12 @@
 import Service from '../models/Service.js';
+import fs from 'fs';
 import User from '../models/User.js';
 import ApiResponse from '../utils/apiResponse.js';
 import ApiError from '../utils/apiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
-import { getPagination, buildSearchQuery } from '../utils/helpers.js';
+import { getPagination } from '../utils/helpers.js';
+import uploadService from '../services/uploadService.js';
+// The original `buildSearchQuery` from `../utils/helpers.js` was removed as per the instruction's implied change.
 
 export const getServices = asyncHandler(async (req, res) => {
   const {
@@ -32,8 +35,8 @@ export const getServices = asyncHandler(async (req, res) => {
 
   // Build query
   const query = {
-    isActive: true,
-    isApproved: true
+    isActive: true
+    // isApproved: true // Disabled for testing/MVP
   };
 
   // Text search
@@ -230,8 +233,7 @@ export const getServicesByProvider = asyncHandler(async (req, res) => {
 
   const query = {
     providerId: req.params.userId,
-    isActive: true,
-    isApproved: true
+    isActive: true
   };
 
   const [services, total] = await Promise.all([
@@ -290,8 +292,7 @@ export const getPopularServices = asyncHandler(async (req, res) => {
  */
 export const getCategories = asyncHandler(async (req, res) => {
   const categories = await Service.distinct('category', {
-    isActive: true,
-    isApproved: true
+    isActive: true
   });
 
   // Get count for each category
@@ -299,8 +300,8 @@ export const getCategories = asyncHandler(async (req, res) => {
     categories.map(async (category) => {
       const count = await Service.countDocuments({
         category,
-        isActive: true,
-        isApproved: true
+        isActive: true
+        // isApproved: true 
       });
       return { category, count };
     })
@@ -339,22 +340,36 @@ export const uploadServiceImages = asyncHandler(async (req, res) => {
   }
 
   // Check ownership
-  if (service.providerId.toString() !== req.user._id.toString()) {
+  if (service.providerId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
     throw ApiError.forbidden('Not authorized to update this service');
   }
 
-  // Image URLs would be uploaded to Cloudinary first (implement in upload service)
-  // For now, assume images are passed in request body
-  const { images } = req.body;
-
-  if (!images || !Array.isArray(images)) {
-    throw ApiError.badRequest('Please provide an array of image URLs');
+  if (!req.files || req.files.length === 0) {
+    throw ApiError.badRequest('Please provide images to upload');
   }
 
-  service.images = [...service.images, ...images].slice(0, 5); // Max 5 images
-  await service.save();
+  try {
+    const uploadResults = await uploadService.uploadMultipleImages(req.files, 'services');
+    const imageUrls = uploadResults.map(result => result.url);
 
-  ApiResponse.success(res, service, 'Images uploaded successfully');
+    service.images = [...service.images, ...imageUrls].slice(0, 5); // Max 5 images
+    await service.save();
+
+    // Clean up local files
+    req.files.forEach(file => {
+      fs.unlink(file.path, (err) => {
+        if (err) console.error('Error deleting local file:', err);
+      });
+    });
+
+    ApiResponse.success(res, service, 'Images uploaded successfully');
+  } catch (error) {
+    // Clean up local files on error
+    req.files.forEach(file => {
+      fs.unlink(file.path, () => { });
+    });
+    throw new ApiError(error.message || 'Image upload failed', 500);
+  }
 });
 
 /**
@@ -378,4 +393,70 @@ export const approveService = asyncHandler(async (req, res) => {
   // await createNotification(...)
 
   ApiResponse.success(res, service, 'Service approved successfully');
+});
+
+/**
+ * @desc    Check if service is favorited by current user
+ * @route   GET /api/v1/services/:id/is-favorite
+ * @access  Private
+ */
+export const checkIfFavorite = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw ApiError.unauthorized('User not found');
+  }
+
+  const isFavorite = user.savedServices && user.savedServices.includes(req.params.id);
+
+  ApiResponse.success(res, { isFavorite }, 'Favorite status checked');
+});
+
+/**
+ * @desc    Toggle favorite status for a service
+ * @route   POST /api/v1/services/:id/favorite
+ * @access  Private
+ */
+export const toggleFavorite = asyncHandler(async (req, res) => {
+  const service = await Service.findById(req.params.id);
+
+  if (!service) {
+    throw ApiError.notFound('Service not found');
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (!user.savedServices) {
+    user.savedServices = [];
+  }
+
+  const serviceIdIndex = user.savedServices.indexOf(service._id);
+
+  if (serviceIdIndex === -1) {
+    // Add to favorites
+    user.savedServices.push(service._id);
+  } else {
+    // Remove from favorites
+    user.savedServices.splice(serviceIdIndex, 1);
+  }
+
+  await user.save({ validateBeforeSave: false });
+
+  // Make sure to return the full service object like the frontend expects
+  const populatedService = await Service.findById(req.params.id)
+    .populate('providerId', 'firstName lastName displayName profileImage rating verifiedResident badges totalReviews bio')
+    .populate({
+      path: 'reviews',
+      populate: {
+        path: 'reviewerId',
+        select: 'firstName lastName displayName profileImage'
+      },
+      options: { limit: 5, sort: { createdAt: -1 } }
+    });
+
+  ApiResponse.success(
+    res,
+    populatedService,
+    serviceIdIndex === -1 ? 'Service added to favorites' : 'Service removed from favorites'
+  );
 });

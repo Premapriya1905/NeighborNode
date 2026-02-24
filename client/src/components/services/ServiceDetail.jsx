@@ -95,8 +95,8 @@ const ServiceDetailComponent = ({
   const hasReviews = reviews && reviews.length > 0;
   const averageRating = hasReviews
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(
-        1,
-      )
+      1,
+    )
     : 0;
 
   return (
@@ -167,11 +167,10 @@ const ServiceDetailComponent = ({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onFavorite}
-                  className={`p-3 rounded-full transition-colors ${
-                    isFavorite
+                  className={`p-3 rounded-full transition-colors ${isFavorite
                       ? "bg-red-100 dark:bg-red-900/20 text-red-500"
                       : "bg-gray-100 dark:bg-slate-700 text-gray-600"
-                  }`}
+                    }`}
                 >
                   <Heart
                     className="w-6 h-6"
@@ -191,27 +190,26 @@ const ServiceDetailComponent = ({
           >
             <h3 className="text-lg font-semibold mb-4">Service Provider</h3>
             <div className="flex items-center gap-4">
-              <Avatar src={service.provider?.avatar} size="lg" />
+              <Avatar src={service.providerId?.profileImage} size="lg" />
               <div className="flex-1">
                 <p className="font-semibold text-lg">
-                  {service.provider?.name}
+                  {service.providerId?.displayName || `${service.providerId?.firstName} ${service.providerId?.lastName}`}
                 </p>
                 <div className="flex items-center gap-2 mb-1">
                   <Rating
-                    value={service.provider?.averageRating}
+                    value={service.providerId?.rating}
                     size="sm"
                     showValue
                   />
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {service.provider?.totalBookings || 0} bookings • Member since{" "}
-                  {formatDate(service.provider?.createdAt)}
+                  {service.providerId?.totalBookings || 0} bookings
                 </p>
               </div>
             </div>
-            {service.provider?.bio && (
+            {service.providerId?.bio && (
               <p className="mt-4 text-gray-700 dark:text-gray-300">
-                {service.provider.bio}
+                {service.providerId.bio}
               </p>
             )}
           </motion.div>
@@ -259,9 +257,9 @@ const ServiceDetailComponent = ({
                   {typeof service.location === "string"
                     ? service.location
                     : service.location?.street ||
-                      service.location?.city ||
-                      service.location?.buildingName ||
-                      "Location not specified"}
+                    service.location?.city ||
+                    service.location?.buildingName ||
+                    "Location not specified"}
                 </p>
               </div>
               {service.availability && (
@@ -328,10 +326,10 @@ const ServiceDetailComponent = ({
               <div className="mb-6">
                 <div className="flex items-baseline gap-2 mb-2">
                   <span className="text-5xl font-bold">
-                    {formatCurrency(service.price)}
+                    {formatCurrency(service.pricing?.amount || 0)}
                   </span>
                   <span className="text-gray-600 dark:text-gray-400">
-                    per {service.priceType === "per_hour" ? "hour" : "service"}
+                    {service.pricing?.type === "hourly" ? "per hour" : "fixed"}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
@@ -458,13 +456,7 @@ const ServiceDetailComponent = ({
               <div className="space-y-3 text-sm">
                 <div>
                   <p className="text-gray-600 dark:text-gray-400">Email</p>
-                  <p className="font-medium">{service.provider?.email}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 dark:text-gray-400">Phone</p>
-                  <p className="font-medium">
-                    {service.provider?.phone || "Not provided"}
-                  </p>
+                  <p className="font-medium text-gray-500 italic">Hidden for privacy until booked</p>
                 </div>
               </div>
             </div>
