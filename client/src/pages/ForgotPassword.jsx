@@ -85,9 +85,10 @@ const ForgotPassword = () => {
                             <p className="text-gray-600 dark:text-gray-300">
                                 We've sent an email to <strong>{email}</strong> with instructions to reset your password.
                             </p>
+
                             <button
                                 onClick={() => setIsSent(false)}
-                                className="text-primary-600 hover:text-primary-700 text-sm font-medium transition-colors"
+                                className="text-primary-600 hover:text-primary-700 text-sm font-medium transition-colors mt-4 block mx-auto"
                             >
                                 Didn't receive the email? Try again
                             </button>
