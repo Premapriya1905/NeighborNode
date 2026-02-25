@@ -101,8 +101,8 @@ const ServiceFilters = ({ onFilterChange, filters = {} }) => {
           >
             <option value="newest">Newest</option>
             <option value="rating">Rating</option>
-            <option value="price-low">Price (Low to High)</option>
-            <option value="price-high">Price (High to Low)</option>
+            <option value="price_low">Price (Low to High)</option>
+            <option value="price_high">Price (High to Low)</option>
             <option value="popular">Most Popular</option>
           </select>
         </div>

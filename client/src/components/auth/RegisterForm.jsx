@@ -73,7 +73,7 @@ const RegisterForm = () => {
 
     if (!formData.email.trim()) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
-      newErrors.email = "Invalid email format";
+      newErrors.email = "Invalid email format (must contain '@' and domain)";
 
     if (!formData.buildingName.trim())
       newErrors.buildingName = "Building name is required";

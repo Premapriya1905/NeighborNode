@@ -11,6 +11,7 @@ const LoginForm = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -20,17 +21,50 @@ const LoginForm = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // clear error for this field
+    if (errors[e.target.name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [e.target.name]: "",
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Invalid email format (must contain '@' and domain)";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setLoading(true);
+    setErrors({});
 
     try {
-      await login(formData);
-      navigate("/dashboard");
+      const response = await login(formData);
+      if (response?.accessToken) {
+        navigate("/dashboard");
+      } else {
+        setErrors({ general: response?.message || "Login failed" });
+      }
     } catch (error) {
       console.error("Login failed:", error);
+      setErrors({ general: error.message || "An unexpected error occurred" });
     } finally {
       setLoading(false);
     }
@@ -52,6 +86,11 @@ const LoginForm = () => {
 
       {/* Form */}
       <div className="glass-strong rounded-2xl shadow-soft-lg p-8">
+        {errors.general && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+            {errors.general}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email Input */}
           <div>
@@ -65,11 +104,13 @@ const LoginForm = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
-                className="input pl-11"
+                className={`input pl-11 ${errors.email ? "border-red-500" : ""}`}
                 placeholder="you@example.com"
               />
             </div>
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
           </div>
 
           {/* Password Input */}
@@ -82,8 +123,7 @@ const LoginForm = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                required
-                className="input pl-11 pr-11"
+                className={`input pl-11 pr-11 ${errors.password ? "border-red-500" : ""}`}
                 placeholder="••••••••"
               />
               <button
@@ -98,6 +138,9 @@ const LoginForm = () => {
                 )}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            )}
           </div>
 
           {/* Remember & Forgot */}

@@ -5,6 +5,7 @@ import ApiResponse from '../utils/apiResponse.js';
 import ApiError from '../utils/apiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { generateTokens, sanitizeUser } from '../utils/helpers.js';
+import { sendEmail } from '../utils/sendEmail.js';
 
 /**
  * @desc    Register new user
@@ -201,18 +202,35 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  // Print to console for local testing since there's no email service configured
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
-  console.log('\\n================ PASSWORD RESET LINK ================');
-  console.log(`Email sent to: ${user.email}`);
-  console.log(`Use this URL to reset the password: ${resetUrl}`);
-  console.log('=====================================================\\n');
 
-  ApiResponse.success(
-    res,
-    null,
-    'If an account exists with this email, a password reset link has been sent'
-  );
+  // HTML Message for the email
+  const message = `
+    <h1>You requested a password reset</h1>
+    <p>Please go to the following link to reset your password:</p>
+    <a href="${resetUrl}" clicktracking="off">${resetUrl}</a>
+    <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+  `;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Neighbornode - Password Reset Request',
+      html: message,
+    });
+
+    ApiResponse.success(
+      res,
+      null,
+      'If an account exists with this email, a password reset link has been sent'
+    );
+  } catch (error) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    throw ApiError.internal('Email could not be sent');
+  }
 });
 
 /**

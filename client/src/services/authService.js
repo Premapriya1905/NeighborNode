@@ -12,7 +12,7 @@ class AuthService {
 
       return data;
     } catch (error) {
-      return error.response?.data || {
+      return error.message ? error : {
         message: "Registration failed",
       };
     }
@@ -28,7 +28,7 @@ class AuthService {
 
       return data;
     } catch (error) {
-      return error.response?.data || {
+      return error.message ? error : {
         message: "Login failed",
       };
     }
