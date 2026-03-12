@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import bookingService from '../services/bookingService';
 import toast from 'react-hot-toast';
 
-const useBookings = () => {
+const useBookings = (initialAsProvider = false) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     status: null,
-    sortBy: 'date'
+    sortBy: 'date',
+    asProvider: initialAsProvider
   });
 
   const fetchBookings = useCallback(async () => {
@@ -17,7 +18,8 @@ const useBookings = () => {
     try {
       const response = await bookingService.getMyBookings({
         status: filters.status,
-        sort: filters.sortBy
+        sort: filters.sortBy,
+        asProvider: filters.asProvider
       });
       if (response.success) {
         setBookings(response.data || []);
@@ -71,7 +73,7 @@ const useBookings = () => {
         default:
           throw new Error('Invalid status');
       }
-      
+
       if (response.success) {
         await fetchBookings();
         return response;

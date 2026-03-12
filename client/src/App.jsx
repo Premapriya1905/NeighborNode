@@ -17,6 +17,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Bookings from "./pages/Bookings";
+import Appointments from "./pages/Appointments";
 import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 
@@ -67,6 +68,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <Bookings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/appointments"
+          element={
+            <ProtectedRoute>
+              <Appointments />
             </ProtectedRoute>
           }
         />

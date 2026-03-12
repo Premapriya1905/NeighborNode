@@ -1,14 +1,6 @@
-export const SERVICE_CATEGORIES = [
-    'Home Services',
-    'Tutoring',
-    'Pet Care',
-    'Fitness',
-    'Tech Support',
-    'Creative',
-    'Food & Cooking',
-    'Tools & Equipment',
-    'Other'
-  ];
+import { SERVICE_CATEGORIES_MAP } from './categories';
+
+export const SERVICE_CATEGORIES = Object.keys(SERVICE_CATEGORIES_MAP);
   
   export const BOOKING_STATUS = {
     PENDING: 'pending',

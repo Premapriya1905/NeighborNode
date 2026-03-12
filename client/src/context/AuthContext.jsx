@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
 import toast from 'react-hot-toast';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

@@ -12,12 +12,6 @@ const serviceSchema = new mongoose.Schema({
   },
 
   // Service Details
-  title: {
-    type: String,
-    required: [true, 'Service title is required'],
-    trim: true,
-    maxlength: [100, 'Title cannot exceed 100 characters']
-  },
   description: {
     type: String,
     required: [true, 'Service description is required'],
@@ -179,7 +173,7 @@ const serviceSchema = new mongoose.Schema({
 serviceSchema.index({ category: 1, isActive: 1, isApproved: 1 });
 serviceSchema.index({ rating: -1, reviewCount: -1 });
 serviceSchema.index({ 'location.buildingName': 1, 'location.street': 1 });
-serviceSchema.index({ title: 'text', description: 'text' }); // Full-text search
+serviceSchema.index({ category: 'text', description: 'text', subcategory: 'text' }); // Full-text search
 
 // Virtual for reviews
 serviceSchema.virtual('reviews', {
@@ -190,8 +184,9 @@ serviceSchema.virtual('reviews', {
 
 // Generate slug before saving
 serviceSchema.pre('save', function (next) {
-  if (this.isModified('title')) {
-    this.slug = slugify(this.title, {
+  if (this.isModified('category') || this.isModified('subcategory')) {
+    const slugBase = this.subcategory ? `${this.category}-${this.subcategory}` : this.category;
+    this.slug = slugify(slugBase, {
       lower: true,
       strict: true,
       trim: true

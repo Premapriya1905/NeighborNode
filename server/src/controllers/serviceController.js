@@ -232,8 +232,7 @@ export const getServicesByProvider = asyncHandler(async (req, res) => {
   const { skip, limit: parsedLimit } = getPagination(page, limit);
 
   const query = {
-    providerId: req.params.userId,
-    isActive: true
+    providerId: req.params.userId
   };
 
   const [services, total] = await Promise.all([
