@@ -205,18 +205,18 @@ export const getSuggestions = asyncHandler(async (req, res) => {
   // Service title suggestions
   if (type === 'all' || type === 'services') {
     const services = await Service.find({
-      title: { $regex: q, $options: 'i' },
+      category: { $regex: q, $options: 'i' },
       isActive: true,
       isApproved: true
     })
-      .select('title category')
+      .select('category subcategory')
       .limit(5)
       .lean();
 
     suggestions.push(
       ...services.map(s => ({
         type: 'service',
-        text: s.title,
+        text: s.subcategory ? `${s.category} - ${s.subcategory}` : s.category,
         category: s.category
       }))
     );

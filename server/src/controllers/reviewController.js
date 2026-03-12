@@ -14,7 +14,7 @@ import { BOOKING_STATUS, NOTIFICATION_TYPES } from '../config/constants.js';
  * @access  Private
  */
 export const createReview = asyncHandler(async (req, res) => {
-  const { bookingId, rating, title, comment, aspects } = req.body;
+  const { bookingId, rating, comment, aspects } = req.body;
 
   // Get booking details
   const booking = await Booking.findById(bookingId)
@@ -55,7 +55,7 @@ export const createReview = asyncHandler(async (req, res) => {
   // Populate review
   await review.populate([
     { path: 'reviewerId', select: 'firstName lastName displayName profileImage' },
-    { path: 'serviceId', select: 'title' }
+    { path: 'serviceId', select: 'category subcategory' }
   ]);
 
   // Create notification for provider

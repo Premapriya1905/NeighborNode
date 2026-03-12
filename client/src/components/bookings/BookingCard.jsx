@@ -4,9 +4,13 @@ import { Clock, MapPin, User, DollarSign, ChevronDown } from "lucide-react";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { BOOKING_STATUS } from "../../utils/constants";
 import BookingModal from "./BookingModal";
+import { useAuth } from "../../hooks/useAuth";
 
 const BookingCard = ({ booking, onStatusChange }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user } = useAuth();
+
+  const isProvider = user?._id === booking.providerId?._id || user?._id === booking.providerId;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -47,10 +51,10 @@ const BookingCard = ({ booking, onStatusChange }) => {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold mb-1">
-                {booking.serviceName || "Service"}
+                {booking.serviceId?.category || "Category"}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Booking ID: {booking._id?.slice(-6) || "N/A"}
+                {booking.serviceId?.title || "Service Title"}
               </p>
             </div>
             <span
@@ -84,8 +88,10 @@ const BookingCard = ({ booking, onStatusChange }) => {
           <div className="mb-4 pb-4 border-b border-gray-200 dark:border-slate-700">
             <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 mb-2">
               <User className="w-4 h-4" />
-              <span className="text-sm">
-                {booking.providerName || booking.customerName || "User"}
+              <span className="text-sm border-b border-transparent">
+                {isProvider
+                  ? (booking.customerId?.displayName || booking.customerName || "Customer")
+                  : (booking.providerId?.displayName || booking.providerName || "Provider")}
               </span>
             </div>
             {booking.location && (
@@ -95,8 +101,8 @@ const BookingCard = ({ booking, onStatusChange }) => {
                   {typeof booking.location === "string"
                     ? booking.location
                     : booking.location?.street ||
-                      booking.location?.city ||
-                      "Location not specified"}
+                    booking.location?.city ||
+                    "Location not specified"}
                 </span>
               </div>
             )}
@@ -110,17 +116,35 @@ const BookingCard = ({ booking, onStatusChange }) => {
                 {formatCurrency(booking.agreedPrice)}
               </span>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                ({booking.duration || 60} min)
+                {booking.serviceId?.pricing?.type === 'hourly' && '/hour'}
+                {booking.serviceId?.pricing?.type === 'monthly' && '/month'}
+                {booking.serviceId?.pricing?.type === 'yearly' && '/year'}
+                {booking.serviceId?.pricing?.type === 'fixed' && ''}
+                {booking.serviceId?.pricing?.type === 'free' && ''}
               </span>
             </div>
             <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
           </div>
 
           {/* Quick Actions Preview */}
-          {booking.status === BOOKING_STATUS.PENDING && (
+          {booking.status === BOOKING_STATUS.PENDING && isProvider && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700 flex gap-2">
-              <button className="flex-1 btn btn-sm btn-primary">Accept</button>
-              <button className="flex-1 btn btn-sm btn-secondary">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsModalOpen(true); // Let the modal handle the actual actions to reuse confirmation UI/logic
+                }}
+                className="flex-1 btn btn-sm btn-primary"
+              >
+                Accept
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsModalOpen(true);
+                }}
+                className="flex-1 btn btn-sm btn-secondary"
+              >
                 Reject
               </button>
             </div>

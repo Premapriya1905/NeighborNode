@@ -18,6 +18,8 @@ export const SERVICE_CATEGORIES = [
 export const PRICING_TYPES = {
   FIXED: 'fixed',
   HOURLY: 'hourly',
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
   FREE: 'free'
 };
 

@@ -128,7 +128,7 @@ bookingSchema.virtual('canBeReviewed').get(function() {
 bookingSchema.statics.getUserBookings = function(userId, asCustomer = true) {
   const filter = asCustomer ? { customerId: userId } : { providerId: userId };
   return this.find(filter)
-    .populate('serviceId', 'title images pricing category')
+    .populate('serviceId', 'images pricing category subcategory')
     .populate('providerId', 'firstName lastName displayName profileImage rating')
     .populate('customerId', 'firstName lastName displayName profileImage rating')
     .sort({ scheduledDate: -1 });
@@ -144,7 +144,7 @@ bookingSchema.statics.getUpcomingBookings = function(userId) {
     scheduledDate: { $gte: new Date() },
     status: { $in: [BOOKING_STATUS.ACCEPTED, BOOKING_STATUS.CONFIRMED] }
   })
-  .populate('serviceId', 'title images')
+  .populate('serviceId', 'images')
   .populate('providerId', 'firstName lastName displayName profileImage')
   .populate('customerId', 'firstName lastName displayName profileImage')
   .sort({ scheduledDate: 1 });

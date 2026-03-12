@@ -2,13 +2,6 @@ import { body, param, query } from 'express-validator';
 import { SERVICE_CATEGORIES, PRICING_TYPES, SERVICE_AREAS, DAYS_OF_WEEK } from '../config/constants.js';
 
 export const createServiceValidation = [
-  body('title')
-    .trim()
-    .notEmpty()
-    .withMessage('Service title is required')
-    .isLength({ min: 5, max: 100 })
-    .withMessage('Title must be between 5 and 100 characters'),
-  
   body('description')
     .trim()
     .notEmpty()
@@ -79,12 +72,6 @@ export const updateServiceValidation = [
   param('id')
     .isMongoId()
     .withMessage('Invalid service ID'),
-  
-  body('title')
-    .optional()
-    .trim()
-    .isLength({ min: 5, max: 100 })
-    .withMessage('Title must be between 5 and 100 characters'),
   
   body('description')
     .optional()

@@ -128,7 +128,7 @@ export const getUserReviews = asyncHandler(async (req, res) => {
   const [reviews, total] = await Promise.all([
     Review.find(query)
       .populate('reviewerId', 'firstName lastName displayName profileImage')
-      .populate('serviceId', 'title')
+      .populate('serviceId', 'category subcategory images')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parsedLimit)

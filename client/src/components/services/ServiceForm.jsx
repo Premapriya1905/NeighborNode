@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Upload, X, Plus } from "lucide-react";
-import { SERVICE_CATEGORIES } from "../../utils/constants";
+import toast from "react-hot-toast";
+import { SERVICE_CATEGORIES_MAP } from "../../utils/categories";
 
 const ServiceForm = ({ onSubmit, initialData = null, isLoading = false }) => {
   const [formData, setFormData] = useState(
     initialData || {
-      title: "",
       description: "",
       category: "",
+      subCategory: "",
       pricing: {
         amount: "",
-        type: "fixed", // 'fixed' or 'hourly'
+        type: "hourly", // 'hourly', 'monthly', or 'yearly'
       },
       availability: {
         days: [],
@@ -40,6 +41,14 @@ const ServiceForm = ({ onSubmit, initialData = null, isLoading = false }) => {
         ...formData.pricing,
         [field]: value,
       },
+    });
+  };
+
+  const handleCategoryChange = (e) => {
+    setFormData({
+      ...formData,
+      category: e.target.value,
+      subCategory: "", // reset sub-category when category changes
     });
   };
 
@@ -83,13 +92,19 @@ const ServiceForm = ({ onSubmit, initialData = null, isLoading = false }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.description.trim())
       newErrors.description = "Description is required";
     if (!formData.category) newErrors.category = "Category is required";
+    if (!formData.subCategory) newErrors.subCategory = "Sub-category is required";
     if (!formData.pricing.amount) newErrors.price = "Price is required";
-    if (formData.previewUrls.length === 0)
-      newErrors.images = "At least one image is required";
+    
+    if (formData.availability.days.length === 0) {
+      newErrors.availability = "Please select at least one available day";
+    }
+    
+    if (!formData.availability.startTime || !formData.availability.endTime) {
+      newErrors.time = "Both start and end time are required";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -119,35 +134,17 @@ const ServiceForm = ({ onSubmit, initialData = null, isLoading = false }) => {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-2xl mx-auto space-y-6"
     >
-      {/* Title */}
-      <div>
-        <label className="block text-sm font-semibold mb-2">
-          Service Title *
-        </label>
-        <input
-          type="text"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          placeholder="e.g., Professional Home Cleaning"
-          className={`input w-full ${errors.title ? "border-red-500" : ""}`}
-        />
-        {errors.title && (
-          <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-        )}
-      </div>
-
       {/* Category */}
       <div>
         <label className="block text-sm font-semibold mb-2">Category *</label>
         <select
           name="category"
           value={formData.category}
-          onChange={handleChange}
+          onChange={handleCategoryChange}
           className={`input w-full ${errors.category ? "border-red-500" : ""}`}
         >
           <option value="">Select a category</option>
-          {SERVICE_CATEGORIES.map((cat) => (
+          {Object.keys(SERVICE_CATEGORIES_MAP).map((cat) => (
             <option key={cat} value={cat}>
               {cat}
             </option>
@@ -155,6 +152,40 @@ const ServiceForm = ({ onSubmit, initialData = null, isLoading = false }) => {
         </select>
         {errors.category && (
           <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+        )}
+      </div>
+
+      {/* Sub Category */}
+      <div>
+        <label className="block text-sm font-semibold mb-2">Sub-Category *</label>
+        <div 
+          onClickCapture={() => {
+            if (!formData.category) {
+              toast.error("Please choose a category first before selecting a sub-category.");
+            }
+          }}
+        >
+          <select
+            name="subCategory"
+            value={formData.subCategory}
+            onChange={handleChange}
+            className={`input w-full ${errors.subCategory ? "border-red-500" : ""}`}
+            style={{ pointerEvents: !formData.category ? "none" : "auto", backgroundColor: !formData.category ? "#f3f4f6" : undefined }}
+            tabIndex={!formData.category ? -1 : 0}
+            readOnly={!formData.category}
+          >
+            <option value="">Select a sub-category</option>
+            {formData.category && SERVICE_CATEGORIES_MAP[formData.category] && (
+              SERVICE_CATEGORIES_MAP[formData.category].map((subCat) => (
+                <option key={subCat} value={subCat}>
+                  {subCat}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+        {errors.subCategory && (
+          <p className="text-red-500 text-sm mt-1">{errors.subCategory}</p>
         )}
       </div>
 
@@ -201,8 +232,9 @@ const ServiceForm = ({ onSubmit, initialData = null, isLoading = false }) => {
             onChange={(e) => handlePricingChange("type", e.target.value)}
             className="input w-full"
           >
-            <option value="fixed">Fixed Price</option>
-            <option value="hourly">Hourly Rate</option>
+            <option value="hourly">Per Hour</option>
+            <option value="monthly">Per Month</option>
+            <option value="yearly">Per Year</option>
           </select>
         </div>
       </div>
@@ -210,7 +242,7 @@ const ServiceForm = ({ onSubmit, initialData = null, isLoading = false }) => {
       {/* Availability */}
       <div>
         <label className="block text-sm font-semibold mb-2">
-          Available Days
+          Available Days *
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {days.map((day) => (
@@ -218,61 +250,68 @@ const ServiceForm = ({ onSubmit, initialData = null, isLoading = false }) => {
               key={day}
               type="button"
               onClick={() => toggleDay(day)}
-              className={`p-2 rounded-lg text-sm font-medium transition-colors ${
-                formData.availability.days.includes(day)
+              className={`p-2 rounded-lg text-sm font-medium transition-colors ${formData.availability.days.includes(day)
                   ? "bg-primary-600 text-white"
                   : "bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700"
-              }`}
+                }`}
             >
               {day.slice(0, 3)}
             </button>
           ))}
         </div>
+        {errors.availability && (
+          <p className="text-red-500 text-sm mt-1">{errors.availability}</p>
+        )}
       </div>
 
       {/* Time Availability */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-semibold mb-2">Start Time</label>
-          <input
-            type="time"
-            value={formData.availability.startTime}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                availability: {
-                  ...formData.availability,
-                  startTime: e.target.value,
-                },
-              })
-            }
-            className="input w-full"
-          />
-        </div>
+      <div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2">Start Time *</label>
+            <input
+              type="time"
+              value={formData.availability.startTime}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  availability: {
+                    ...formData.availability,
+                    startTime: e.target.value,
+                  },
+                })
+              }
+              className="input w-full"
+            />
+          </div>
 
-        <div>
-          <label className="block text-sm font-semibold mb-2">End Time</label>
-          <input
-            type="time"
-            value={formData.availability.endTime}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                availability: {
-                  ...formData.availability,
-                  endTime: e.target.value,
-                },
-              })
-            }
-            className="input w-full"
-          />
+          <div>
+            <label className="block text-sm font-semibold mb-2">End Time *</label>
+            <input
+              type="time"
+              value={formData.availability.endTime}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  availability: {
+                    ...formData.availability,
+                    endTime: e.target.value,
+                  },
+                })
+              }
+              className="input w-full"
+            />
+          </div>
         </div>
+        {errors.time && (
+          <p className="text-red-500 text-sm mt-1">{errors.time}</p>
+        )}
       </div>
 
       {/* Images Upload */}
       <div>
         <label className="block text-sm font-semibold mb-2">
-          Service Images *
+          Service Images (Optional)
         </label>
         <div className="border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-lg p-6 text-center hover:border-primary-600 transition-colors cursor-pointer">
           <input

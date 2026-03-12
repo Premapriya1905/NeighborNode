@@ -46,7 +46,7 @@ export const createBooking = asyncHandler(async (req, res) => {
 
   // Populate references
   await booking.populate([
-    { path: 'serviceId', select: 'title images pricing category' },
+    { path: 'serviceId', select: 'images pricing category subcategory' },
     { path: 'providerId', select: 'firstName lastName displayName profileImage' },
     { path: 'customerId', select: 'firstName lastName displayName profileImage' }
   ]);
@@ -56,7 +56,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     userId: service.providerId._id,
     type: NOTIFICATION_TYPES.BOOKING_REQUEST,
     title: 'New Booking Request',
-    message: `${req.user.displayName} wants to book your service "${service.title}"`,
+    message: `${req.user.displayName} wants to book your service "${service.subcategory || service.category}"`,
     relatedId: booking._id,
     relatedType: 'booking',
     actionUrl: `/bookings/${booking._id}`
@@ -75,9 +75,19 @@ export const getMyBookings = asyncHandler(async (req, res) => {
   const { skip, limit: parsedLimit } = getPagination(page, limit);
 
   // Build query
-  const query = asProvider === 'true'
-    ? { providerId: req.user._id }
-    : { customerId: req.user._id };
+  let query = {};
+  if (asProvider === 'true') {
+    query.providerId = req.user._id;
+  } else if (asProvider === 'false') {
+    query.customerId = req.user._id;
+  } else {
+    query = {
+      $or: [
+        { customerId: req.user._id },
+        { providerId: req.user._id }
+      ]
+    };
+  }
 
   if (status) {
     query.status = status;
@@ -85,7 +95,7 @@ export const getMyBookings = asyncHandler(async (req, res) => {
 
   const [bookings, total] = await Promise.all([
     Booking.find(query)
-      .populate('serviceId', 'title images pricing category')
+      .populate('serviceId', 'images pricing category subcategory')
       .populate('providerId', 'firstName lastName displayName profileImage rating')
       .populate('customerId', 'firstName lastName displayName profileImage rating')
       .sort({ scheduledDate: -1 })
@@ -112,7 +122,7 @@ export const getMyBookings = asyncHandler(async (req, res) => {
  */
 export const getBookingById = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id)
-    .populate('serviceId', 'title description images pricing category location')
+    .populate('serviceId', 'description images pricing category subcategory location')
     .populate('providerId', 'firstName lastName displayName profileImage rating verifiedResident')
     .populate('customerId', 'firstName lastName displayName profileImage rating verifiedResident');
 
@@ -141,7 +151,7 @@ export const getBookingById = asyncHandler(async (req, res) => {
 export const acceptBooking = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id)
     .populate('customerId', 'displayName')
-    .populate('serviceId', 'title');
+    .populate('serviceId', 'category subcategory');
 
   if (!booking) {
     throw ApiError.notFound('Booking not found');
@@ -164,7 +174,7 @@ export const acceptBooking = asyncHandler(async (req, res) => {
     userId: booking.customerId._id,
     type: NOTIFICATION_TYPES.BOOKING_ACCEPTED,
     title: 'Booking Accepted!',
-    message: `Your booking for "${booking.serviceId.title}" has been accepted`,
+    message: `Your booking for "${booking.serviceId.subcategory || booking.serviceId.category}" has been accepted`,
     relatedId: booking._id,
     relatedType: 'booking',
     actionUrl: `/bookings/${booking._id}`
@@ -182,7 +192,7 @@ export const rejectBooking = asyncHandler(async (req, res) => {
   const { reason } = req.body;
   const booking = await Booking.findById(req.params.id)
     .populate('customerId', 'displayName')
-    .populate('serviceId', 'title');
+    .populate('serviceId', 'category subcategory');
 
   if (!booking) {
     throw ApiError.notFound('Booking not found');
@@ -205,7 +215,7 @@ export const rejectBooking = asyncHandler(async (req, res) => {
     userId: booking.customerId._id,
     type: NOTIFICATION_TYPES.BOOKING_REJECTED,
     title: 'Booking Declined',
-    message: `Your booking for "${booking.serviceId.title}" has been declined`,
+    message: `Your booking for "${booking.serviceId.subcategory || booking.serviceId.category}" has been declined`,
     relatedId: booking._id,
     relatedType: 'booking',
     actionUrl: `/bookings/${booking._id}`
@@ -222,7 +232,7 @@ export const rejectBooking = asyncHandler(async (req, res) => {
 export const completeBooking = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id)
     .populate('customerId', 'displayName')
-    .populate('serviceId', 'title');
+    .populate('serviceId', 'category subcategory');
 
   if (!booking) {
     throw ApiError.notFound('Booking not found');
@@ -240,7 +250,7 @@ export const completeBooking = asyncHandler(async (req, res) => {
     userId: booking.customerId._id,
     type: NOTIFICATION_TYPES.BOOKING_COMPLETED,
     title: 'Service Completed',
-    message: `Your booking for "${booking.serviceId.title}" is complete. Please leave a review!`,
+    message: `Your booking for "${booking.serviceId.subcategory || booking.serviceId.category}" is complete. Please leave a review!`,
     relatedId: booking._id,
     relatedType: 'booking',
     actionUrl: `/bookings/${booking._id}/review`
@@ -259,7 +269,7 @@ export const cancelBooking = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id)
     .populate('customerId', 'displayName')
     .populate('providerId', 'displayName')
-    .populate('serviceId', 'title');
+    .populate('serviceId', 'category subcategory');
 
   if (!booking) {
     throw ApiError.notFound('Booking not found');
@@ -285,7 +295,7 @@ export const cancelBooking = asyncHandler(async (req, res) => {
     userId: otherPartyId,
     type: NOTIFICATION_TYPES.BOOKING_REJECTED,
     title: 'Booking Cancelled',
-    message: `Booking for "${booking.serviceId.title}" has been cancelled`,
+    message: `Booking for "${booking.serviceId.subcategory || booking.serviceId.category}" has been cancelled`,
     relatedId: booking._id,
     relatedType: 'booking',
     actionUrl: `/bookings/${booking._id}`

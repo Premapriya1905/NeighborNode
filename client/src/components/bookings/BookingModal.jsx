@@ -16,6 +16,7 @@ import { formatCurrency, formatDate } from "../../utils/formatters";
 import { BOOKING_STATUS } from "../../utils/constants";
 import BookingTimeline from "./BookingTimeline";
 import bookingService from "../../services/bookingService";
+import { useAuth } from "../../hooks/useAuth";
 import toast from "react-hot-toast";
 
 const BookingModal = ({ isOpen, onClose, booking, onStatusChange }) => {
@@ -25,7 +26,12 @@ const BookingModal = ({ isOpen, onClose, booking, onStatusChange }) => {
   const [showCancelReason, setShowCancelReason] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
+  const { user } = useAuth();
+
   if (!booking) return null;
+
+  const isProvider = user?._id === booking.providerId?._id || user?._id === booking.providerId;
+  const isCustomer = user?._id === booking.customerId?._id || user?._id === booking.customerId;
 
   const handleAccept = async () => {
     setLoading(true);
@@ -144,10 +150,10 @@ const BookingModal = ({ isOpen, onClose, booking, onStatusChange }) => {
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-2xl font-bold">
-                    {booking.serviceName || "Booking Details"}
+                    {booking.serviceId?.category || "Category"}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    ID: {booking._id?.slice(-8) || "N/A"}
+                    {booking.serviceId?.title || "Service Title"}
                   </p>
                 </div>
                 <button
@@ -199,8 +205,8 @@ const BookingModal = ({ isOpen, onClose, booking, onStatusChange }) => {
                         {typeof booking.location === "string"
                           ? booking.location
                           : booking.location?.street ||
-                            booking.location?.city ||
-                            "Location not specified"}
+                          booking.location?.city ||
+                          "Location not specified"}
                       </p>
                     </div>
                   </div>
@@ -226,6 +232,9 @@ const BookingModal = ({ isOpen, onClose, booking, onStatusChange }) => {
                     </p>
                     <p className="font-semibold">
                       {formatCurrency(booking.agreedPrice)}
+                      {booking.serviceId?.pricing?.type === 'hourly' && '/hour'}
+                      {booking.serviceId?.pricing?.type === 'monthly' && '/month'}
+                      {booking.serviceId?.pricing?.type === 'yearly' && '/year'}
                     </p>
                   </div>
                 </div>
@@ -287,7 +296,7 @@ const BookingModal = ({ isOpen, onClose, booking, onStatusChange }) => {
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                {booking.status === BOOKING_STATUS.PENDING && (
+                {booking.status === BOOKING_STATUS.PENDING && isProvider && (
                   <>
                     <button
                       onClick={handleAccept}
@@ -332,7 +341,45 @@ const BookingModal = ({ isOpen, onClose, booking, onStatusChange }) => {
                   </>
                 )}
 
-                {booking.status === BOOKING_STATUS.ACCEPTED && (
+                {booking.status === BOOKING_STATUS.PENDING && isCustomer && (
+                  <>
+                    {!showCancelReason ? (
+                      <button
+                        onClick={() => setShowCancelReason(true)}
+                        className="w-full btn btn-secondary py-2"
+                      >
+                        Cancel Booking
+                      </button>
+                    ) : (
+                      <>
+                        <textarea
+                          value={cancelReason}
+                          onChange={(e) => setCancelReason(e.target.value)}
+                          placeholder="Please provide a reason for cancellation..."
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm"
+                          rows="3"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleCancel}
+                            disabled={loading}
+                            className="flex-1 btn btn-danger py-2 text-sm"
+                          >
+                            {loading ? "Cancelling..." : "Confirm Cancellation"}
+                          </button>
+                          <button
+                            onClick={() => setShowCancelReason(false)}
+                            className="flex-1 btn btn-secondary py-2 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+
+                {booking.status === BOOKING_STATUS.ACCEPTED && isProvider && (
                   <>
                     <button
                       onClick={handleComplete}
@@ -380,13 +427,13 @@ const BookingModal = ({ isOpen, onClose, booking, onStatusChange }) => {
                 {(booking.status === BOOKING_STATUS.CANCELLED ||
                   booking.status === BOOKING_STATUS.REJECTED ||
                   booking.status === BOOKING_STATUS.COMPLETED) && (
-                  <button
-                    onClick={onClose}
-                    className="w-full btn btn-secondary py-2"
-                  >
-                    Close
-                  </button>
-                )}
+                    <button
+                      onClick={onClose}
+                      className="w-full btn btn-secondary py-2"
+                    >
+                      Close
+                    </button>
+                  )}
               </div>
             </div>
           </motion.div>

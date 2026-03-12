@@ -59,7 +59,7 @@ const ServiceCard = ({ service, onFavorite }) => {
           {/* Title and Provider */}
           <div className="flex items-start justify-between mb-3 gap-2">
             <h3 className="font-semibold text-lg line-clamp-2 flex-1">
-              {service.title}
+              {service.subcategory || service.category}
             </h3>
           </div>
 

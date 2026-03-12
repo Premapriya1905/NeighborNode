@@ -14,9 +14,9 @@ const CreateService = () => {
   const handleCreateService = async (formData) => {
     try {
       const payload = {
-        title: formData.title,
         description: formData.description,
         category: formData.category,
+        subcategory: formData.subCategory,
 
         pricing: {
           type: formData.pricing.type,

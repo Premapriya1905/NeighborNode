@@ -29,7 +29,7 @@ const Profile = () => {
     setIsLoading(true);
     try {
       const [servicesRes, reviewsRes] = await Promise.all([
-        api.get(`/services/user/${user._id}`),
+        api.get(`/services/provider/${user._id}`),
         api.get(`/reviews/user/${user._id}`),
       ]);
 
@@ -117,10 +117,9 @@ const Profile = () => {
               <Tab.List className="flex gap-2 mb-8 border-b border-gray-200 dark:border-slate-700 flex-wrap">
                 <Tab
                   className={({ selected }) =>
-                    `px-4 py-3 font-semibold border-b-2 transition-colors outline-none ${
-                      selected
-                        ? "border-primary-500 text-primary-600"
-                        : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                    `px-4 py-3 font-semibold border-b-2 transition-colors outline-none ${selected
+                      ? "border-primary-500 text-primary-600"
+                      : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900"
                     }`
                   }
                 >
@@ -128,10 +127,9 @@ const Profile = () => {
                 </Tab>
                 <Tab
                   className={({ selected }) =>
-                    `px-4 py-3 font-semibold border-b-2 transition-colors outline-none ${
-                      selected
-                        ? "border-primary-500 text-primary-600"
-                        : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                    `px-4 py-3 font-semibold border-b-2 transition-colors outline-none ${selected
+                      ? "border-primary-500 text-primary-600"
+                      : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900"
                     }`
                   }
                 >

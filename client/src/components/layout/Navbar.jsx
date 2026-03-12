@@ -44,9 +44,8 @@ const Navbar = ({ onMenuClick }) => {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "glass-strong shadow-soft" : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "glass-strong shadow-soft" : "bg-transparent"
+        }`}
     >
       <div className="container-custom">
         <div className="flex items-center justify-between h-16 sm:h-20">
@@ -99,13 +98,32 @@ const Navbar = ({ onMenuClick }) => {
                   <span>Post Service</span>
                 </Link>
 
-                <Link
-                  to="/bookings"
-                  className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors hidden sm:block"
-                >
-                  <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </Link>
+                <div className="relative group hidden sm:block">
+                  <button className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                    <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  </button>
+
+                  {/* Dropdown for Bookings/Appointments */}
+                  <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-2">
+                    <div className="glass-strong rounded-xl shadow-soft-lg overflow-hidden p-2">
+                      <Link
+                        to="/bookings"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                      >
+                        <Search className="w-4 h-4" />
+                        <span>My Bookings</span>
+                      </Link>
+                      <Link
+                        to="/appointments"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors mt-1"
+                      >
+                        <Bell className="w-4 h-4" />
+                        <span>Appointments</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="relative group">
                   <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
