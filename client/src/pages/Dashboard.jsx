@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import useBookings from "../hooks/useBookings";
 import { BookingCard } from "../components/bookings";
@@ -10,35 +9,6 @@ import { BOOKING_STATUS } from "../utils/constants";
 const Dashboard = () => {
   const { user } = useAuth();
   const { bookings, loading } = useBookings();
-
-  const stats = [
-    {
-      label: "Total Bookings",
-      value: bookings.length,
-      icon: Calendar,
-      color: "text-blue-600",
-    },
-    {
-      label: "Pending",
-      value: bookings.filter((b) => b.status === BOOKING_STATUS.PENDING).length,
-      icon: AlertCircle,
-      color: "text-yellow-600",
-    },
-    {
-      label: "Accepted",
-      value: bookings.filter((b) => b.status === BOOKING_STATUS.ACCEPTED)
-        .length,
-      icon: TrendingUp,
-      color: "text-blue-600",
-    },
-    {
-      label: "Completed",
-      value: bookings.filter((b) => b.status === BOOKING_STATUS.COMPLETED)
-        .length,
-      icon: CheckCircle,
-      color: "text-green-600",
-    },
-  ];
 
   const upcomingBookings = bookings
     .filter(
@@ -57,35 +27,6 @@ const Dashboard = () => {
           <h1 className="text-4xl font-display font-bold mb-2">
             Welcome back, {user?.name?.split(" ")[0] || "there"}!
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Here's an overview of your bookings and activity
-          </p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="glass-strong rounded-2xl p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      {stat.label}
-                    </p>
-                    <p className="text-3xl font-bold">{stat.value}</p>
-                  </div>
-                  <Icon className={`w-8 h-8 ${stat.color}`} />
-                </div>
-              </motion.div>
-            );
-          })}
         </div>
 
         {/* Quick Actions */}
@@ -96,9 +37,9 @@ const Dashboard = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold mb-1">Create Service</h3>
+                <h3 className="text-lg font-bold mb-1">My Appointments</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Offer a new service to neighbors
+                  Requests received for your services
                 </p>
               </div>
               <svg
@@ -123,9 +64,9 @@ const Dashboard = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold mb-1">View All Bookings</h3>
+                <h3 className="text-lg font-bold mb-1">My Appointments</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Manage all your bookings
+                  Services you booked from others
                 </p>
               </div>
               <svg
